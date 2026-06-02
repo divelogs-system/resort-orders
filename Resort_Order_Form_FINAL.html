@@ -84,6 +84,13 @@ alter table products enable row level security;
 <title>Resort Supply Orders</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ── print: show only the overlay content ── */
+@media print {
+  body > *:not(#print-overlay) { display:none !important; }
+  #print-overlay { position:static !important; overflow:visible !important; }
+  #print-overlay > div > div:first-child { display:none !important; }
+}
+
 /* ── reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -192,6 +199,18 @@ body::before{
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .field-row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
 @media(max-width:480px){.field-row,.field-row3{grid-template-columns:1fr}}
+@media(max-width:520px){
+  /* review modal rows on mobile */
+  .rv-row{ flex-wrap:wrap; }
+  .rv-item-wrap{ flex:1 1 100%;order:1; }
+  .rv-stepper{ order:2;margin-left:28px; }
+  .rv-unit{ order:3;align-self:center; }
+  .rv-note-btn{ order:4; }
+  .rv-del{ order:5; }
+  /* tabs — allow scroll on very small screens */
+  .tabs{ flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch; }
+  .tab{ flex-shrink:0;font-size:.72rem;padding:8px 10px; }
+}
 
 select,input[type=text],input[type=number],input[type=date],textarea{
   width:100%;padding:11px 14px;
@@ -296,38 +315,59 @@ select:focus,input:focus,textarea:focus{
 /* ── cart rows ── */
 .cart-row{
   display:flex;align-items:center;gap:10px;
-  padding:9px 0;border-bottom:1px solid #f0f4f8;
+  padding:10px 0;border-bottom:1px solid #f0f4f8;
 }
 .cart-row:last-child{border-bottom:none}
-.cr-dot{width:7px;height:7px;border-radius:50%;background:var(--ocean-mid);flex-shrink:0}
+.cr-dot{width:7px;height:7px;border-radius:50%;background:var(--ocean-mid);flex-shrink:0;margin-top:2px;align-self:flex-start}
 .cr-info{flex:1;min-width:0}
-.cr-name{font-size:.86rem;font-weight:500;color:var(--ink)}
-.cr-cat{font-size:.7rem;color:var(--ink-lt)}
+.cr-name{font-size:.88rem;font-weight:600;color:var(--ink);word-break:break-word}
+.cr-cat{font-size:.72rem;color:var(--ink-lt);margin-top:1px}
 .cr-stepper{
   display:flex;align-items:center;
   border:1.5px solid #e2eaf2;border-radius:8px;overflow:hidden;
   background:#f8fbfd;flex-shrink:0;
 }
 .cr-btn{
-  width:28px;height:32px;border:none;background:transparent;
-  color:var(--ocean-mid);font-size:1rem;cursor:pointer;
+  width:32px;height:36px;border:none;background:transparent;
+  color:var(--ocean-mid);font-size:1.1rem;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   transition:background .15s;
 }
 .cr-btn:hover{background:var(--ocean-pale)}
 .cr-qty{
   width:44px;border:none;background:transparent;
-  text-align:center;font-size:.84rem;font-weight:600;
+  text-align:center;font-size:.88rem;font-weight:600;
   font-family:'DM Sans',sans-serif;color:var(--ink);padding:4px 2px;
 }
 .cr-qty:focus{outline:none}
-.cr-unit{font-size:.72rem;color:var(--ink-lt);min-width:30px;flex-shrink:0}
+.cr-unit{font-size:.74rem;color:var(--ink-lt);min-width:28px;flex-shrink:0}
 .cr-del{
   background:transparent;border:none;color:#d1d5db;
-  cursor:pointer;font-size:1rem;padding:4px;
+  cursor:pointer;font-size:1.1rem;padding:6px;
   border-radius:5px;transition:color .15s;flex-shrink:0;
 }
 .cr-del:hover{color:var(--red)}
+
+/* ── mobile: stack cart rows vertically ── */
+@media(max-width:520px){
+  .cart-row{
+    flex-wrap:wrap;align-items:flex-start;gap:6px;
+    padding:12px 0;
+  }
+  .cr-dot{ margin-top:4px; }
+  .cr-info{
+    flex:1;min-width:0;
+    /* take full remaining width on first line */
+    order:1;
+  }
+  .cr-del{ order:2;margin-left:auto; }
+  .cr-stepper{ order:3;margin-left:22px; }
+  .cr-unit{ order:4;align-self:center; }
+  .cr-name{ font-size:.92rem; }
+  .cr-cat{ font-size:.75rem;margin-top:2px; }
+  .cr-qty{ width:52px;font-size:.92rem; }
+  .cr-btn{ width:36px;height:40px;font-size:1.2rem; }
+}
 
 /* ── floating button ── */
 .fab{
@@ -1487,6 +1527,55 @@ select:focus,input:focus,textarea:focus{
 .ibb-btn.unarch { border-color:#86efac;color:#86efac; }
 .ibb-btn.unarch:hover { background:rgba(30,125,82,.25); }
 
+/* ── My Recent Orders panel ── */
+.mro-period-bar {
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.mro-period-btn {
+  padding:6px 14px;border:1.5px solid #e2eaf2;border-radius:20px;
+  background:#f8fbfd;font-family:'DM Sans',sans-serif;font-size:.78rem;
+  font-weight:600;color:var(--ink-mid);cursor:pointer;transition:all .15s;
+}
+.mro-period-btn.active {
+  background:var(--ocean);color:white;border-color:var(--ocean);
+}
+.mro-order-block { margin-bottom:16px; }
+.mro-order-date {
+  font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--ink-lt);margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.mro-order-date::after { content:'';flex:1;height:1px;background:#eef2f7; }
+.mro-item-row {
+  display:flex;align-items:center;gap:10px;
+  padding:7px 0;border-bottom:1px solid #f5f7fa;font-size:.84rem;
+}
+.mro-item-row:last-child { border-bottom:none; }
+.mro-dot {
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
+}
+.mro-dot.purchased { background:var(--green); }
+.mro-dot.partial   { background:var(--amber); }
+.mro-dot.pending   { background:#d1d5db; }
+.mro-dot.unavail   { background:var(--red); }
+.mro-name  { flex:1;font-weight:500;color:var(--ink); }
+.mro-qty   { font-family:monospace;font-size:.78rem;color:var(--ink-mid); }
+.mro-badge {
+  font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;
+  white-space:nowrap;flex-shrink:0;
+}
+.mro-badge.purchased { background:var(--green-lt);color:var(--green); }
+.mro-badge.partial   { background:var(--amber-lt);color:var(--amber); }
+.mro-badge.pending   { background:#f3f4f6;color:var(--ink-lt); }
+.mro-badge.unavail   { background:var(--red-lt);color:var(--red); }
+.mro-summary-bar {
+  display:flex;flex-wrap:wrap;gap:8px;
+  background:var(--ocean-pale);border-radius:10px;
+  padding:10px 14px;margin-bottom:14px;font-size:.78rem;
+}
+.mro-stat { display:flex;align-items:center;gap:5px;font-weight:600; }
+
 /* loading spinner */
 .sb-loading {
   text-align:center;padding:30px;color:var(--ink-lt);font-size:.88rem;
@@ -1564,7 +1653,7 @@ select:focus,input:focus,textarea:focus{
     </div>
     <div class="field">
       <label>Department <span class="req">*</span></label>
-      <select id="f-dept" onchange="rebuildCatDropdown()">
+      <select id="f-dept" onchange="rebuildCatDropdown();loadMyRecentOrders();">
         <option value="">-- Select department --</option>
                       <option value="Guest Kitchen">Guest Kitchen</option>
               <option value="Staff Kitchen">Staff Kitchen</option>
@@ -1711,6 +1800,23 @@ select:focus,input:focus,textarea:focus{
     &#128230; Send to Buyer View
   </button>
 
+  <!-- My Recent Orders -->
+  <div class="card" id="mro-card" style="margin-top:14px">
+    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+      <span>My Recent Orders</span>
+      <button onclick="loadMyRecentOrders()" style="background:none;border:none;color:var(--ocean-mid);font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">&#8635; Refresh</button>
+    </div>
+    <div class="mro-period-bar">
+      <span style="font-size:.75rem;font-weight:600;color:var(--ink-mid)">Show:</span>
+      <button class="mro-period-btn"        id="mro-btn-week"    onclick="setMroPeriod('week',this)">This week</button>
+      <button class="mro-period-btn active" id="mro-btn-2week"   onclick="setMroPeriod('2week',this)">Last 2 weeks</button>
+      <button class="mro-period-btn"        id="mro-btn-month"   onclick="setMroPeriod('month',this)">This month</button>
+    </div>
+    <div id="mro-body">
+      <div class="sb-loading"><div class="sb-spinner"></div><br>Loading your orders...</div>
+    </div>
+  </div>
+
 </div><!-- end pane-order -->
 
 <!-- ══════════════ BUYER VIEW PANE ══════════════ -->
@@ -1759,6 +1865,9 @@ select:focus,input:focus,textarea:focus{
       </button>
       <button onclick="kirimKePenerimaan()" style="padding:9px 6px;background:transparent;border:2px solid var(--green);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;color:var(--green);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center" onmouseover="this.style.background='var(--green-lt)'" onmouseout="this.style.background='transparent'">
         &#128230; Kirim ke Penerimaan
+      </button>
+      <button onclick="buyerDownloadExcel()" style="padding:9px 6px;background:transparent;border:2px solid var(--ocean-mid);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;color:var(--ocean);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center" onmouseover="this.style.background='var(--ocean-pale)'" onmouseout="this.style.background='transparent'">
+        &#128202; Download Excel
       </button>
       <button onclick="clearBuyerOrder()" style="padding:9px 6px;background:transparent;border:2px solid #fca5a5;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;color:var(--red);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center" onmouseover="this.style.background='var(--red-lt)'" onmouseout="this.style.background='transparent'">
         &#8635; Clear &amp; New Order
@@ -2002,6 +2111,27 @@ select:focus,input:focus,textarea:focus{
 </div><!-- end products pane -->
 
 </div><!-- wrap -->
+
+<!-- In-page print/report overlay -->
+<div id="print-overlay" style="display:none;position:fixed;inset:0;z-index:700;background:white;overflow-y:auto;">
+  <div style="max-width:860px;margin:0 auto;padding:20px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #e2eaf2;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:.8rem;color:#555;font-weight:600">Filter by date:</span>
+        <input type="date" id="rpt-from" style="padding:6px 10px;border:1.5px solid #e2eaf2;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.82rem">
+        <span style="font-size:.8rem;color:#888">to</span>
+        <input type="date" id="rpt-to" style="padding:6px 10px;border:1.5px solid #e2eaf2;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.82rem">
+        <button onclick="applyReportDateFilter()" style="padding:7px 14px;background:#064e6e;color:white;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer">Apply</button>
+        <button onclick="clearReportDateFilter()" style="padding:7px 12px;background:#f3f4f6;color:#555;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:pointer">Clear</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="window.print()" style="padding:10px 18px;background:#064e6e;color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer">&#128438; Print / PDF</button>
+        <button onclick="document.getElementById('print-overlay').style.display='none';document.body.style.overflow=''" style="padding:10px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer">&#10005; Close</button>
+      </div>
+    </div>
+    <div id="print-content"></div>
+  </div>
+</div>
 
 <!-- Login / user-select overlay -->
 <div class="login-overlay" id="login-overlay">
@@ -2510,6 +2640,7 @@ function showTab(name, btn) {
   document.getElementById('pane-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'products') renderProductsPane();
+  if (name === 'order')    setTimeout(loadMyRecentOrders, 400);
 }
 
 /* ── render the Products pane from live PRODS data ── */
@@ -2870,15 +3001,32 @@ function copyMsg() {
   }
 }
 function fallback(txt, cb) {
+  /* Try execCommand first */
   var ta = document.createElement('textarea');
   ta.value = txt;
-  ta.style.position = 'fixed';
-  ta.style.opacity  = '0';
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
   document.body.appendChild(ta);
   ta.focus(); ta.select();
-  try { document.execCommand('copy'); } catch(e) {}
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch(e) {}
   document.body.removeChild(ta);
-  if (cb) cb();
+  if (ok) { if (cb) cb(); return; }
+  /* execCommand failed — show a modal with the text so user can copy manually */
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML =
+    '<div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3)">' +
+      '<div style="font-size:.9rem;font-weight:600;color:#064e6e;margin-bottom:10px">&#128203; Copy this data</div>' +
+      '<div style="font-size:.78rem;color:#888;margin-bottom:10px">Automatic copy was blocked by your browser. Select all text below and copy manually (Ctrl+A then Ctrl+C, or long-press on mobile).</div>' +
+      '<textarea style="width:100%;height:180px;font-family:monospace;font-size:.75rem;border:1.5px solid #e2eaf2;border-radius:8px;padding:10px;resize:none" readonly>' + txt.replace(/</g,'&lt;') + '</textarea>' +
+      '<button onclick="this.closest(\'div\').parentNode.remove()" style="margin-top:12px;width:100%;padding:11px;background:#064e6e;color:white;border:none;border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer">Close</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  /* auto-select the textarea */
+  setTimeout(function() {
+    var ta2 = overlay.querySelector('textarea');
+    if (ta2) { ta2.focus(); ta2.select(); }
+  }, 100);
 }
 
 /* ── helpers ── */
@@ -2951,6 +3099,7 @@ function sendToBuyer() {
   .then(function() {
     persistCart(); persistBuyer(); refreshBanner();
     toast('✓ Order saved — ' + cart.length + ' items. Buyer View ready.');
+    setTimeout(loadMyRecentOrders, 1500);
   })
   .catch(function(e) { toast('Save error: ' + e.message); });
 }
@@ -3457,21 +3606,14 @@ function updateBuyerSummary() {
 
 /* ── generate reply modal ── */
 function openShareModal() {
-  /* sync any values still sitting in focused inputs before validating */
-  for (var si = 0; si < buyerOrder.length; si++) {
-    var sid  = buyerOrder[si].id;
-    var qEl  = document.getElementById('bq-' + sid);
-    var pEl  = document.getElementById('bp-' + sid);
-    if (qEl && qEl.value !== '') setBuyerQty(sid, qEl.value);
-    if (pEl && pEl.value !== '') setBuyerPrice(sid, pEl.value);
-  }
-  /* validate — at least one item must have a qty entered */
-  var anyFilled = false;
+  /* validate — need at least one item with progress (partial, purchased, or unavailable) */
+  var anyProgress = false;
   for (var i = 0; i < buyerOrder.length; i++) {
-    if (!buyerOrder[i].unavailable && buyerOrder[i].boughtQty > 0) { anyFilled = true; break; }
+    var s = buyerItemStatus(buyerOrder[i]);
+    if (s !== 'pending') { anyProgress = true; break; }
   }
-  if (!anyFilled) {
-    alert('Please enter at least one purchased quantity before generating the reply.');
+  if (!anyProgress) {
+    alert('Please record at least one purchase (or mark an item as unavailable) before generating the reply.');
     return;
   }
 
@@ -4351,23 +4493,54 @@ function npConfirmAdd() {
    BUYER REPORTS — printable windows
    Uses Blob URL so it works when the file is opened locally in Edge.
 ═══════════════════════════════════════════════════════════ */
+var _lastReportType = null; /* 'order' or 'purchase' — for re-rendering after date filter */
+
 function openPrintWindow(html) {
-  try {
-    var blob = new Blob([html], { type: 'text/html' });
-    var url  = URL.createObjectURL(blob);
-    var w = window.open(url, '_blank');
-    if (!w) { toast('Pop-up blocked — please allow pop-ups for this page and try again.'); }
-    /* revoke after a short delay so the window has time to load */
-    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
-  } catch(e) {
-    toast('Could not open print window: ' + e.message);
-  }
+  var bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  var content = bodyMatch ? bodyMatch[1] : html;
+  content = content.replace(/<button[^>]*onclick="window\.print\(\)"[^>]*>[\s\S]*?<\/button>/gi, '');
+  var overlay = document.getElementById('print-overlay');
+  var target  = document.getElementById('print-content');
+  if (!overlay || !target) return;
+  target.innerHTML = content;
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  overlay.scrollTop = 0;
+}
+
+function applyReportDateFilter() {
+  if (_lastReportType === 'order')    buyerPrintOrderList();
+  else if (_lastReportType === 'purchase') buyerPrintPurchaseReport();
+}
+function clearReportDateFilter() {
+  var f = document.getElementById('rpt-from');
+  var t = document.getElementById('rpt-to');
+  if (f) f.value = '';
+  if (t) t.value = '';
+  applyReportDateFilter();
+}
+function getReportDateRange() {
+  var f = (document.getElementById('rpt-from') || {}).value || '';
+  var t = (document.getElementById('rpt-to')   || {}).value || '';
+  return { from: f ? new Date(f) : null, to: t ? new Date(t + 'T23:59:59') : null };
+}
+function itemInDateRange(item, range) {
+  if (!range.from && !range.to) return true;
+  var d = new Date(item.date || '');
+  if (isNaN(d)) return true;
+  if (range.from && d < range.from) return false;
+  if (range.to   && d > range.to)   return false;
+  return true;
 }
 function buyerPrintOrderList() {
   if (!buyerOrder.length) { toast('No order loaded yet.'); return; }
+  _lastReportType = 'order';
+  var range = getReportDateRange();
+  var items = buyerOrder.filter(function(i){ return itemInDateRange(i, range); });
+  if (!items.length) { toast('No items match the selected date range.'); return; }
   var meta = buyerOrder[0];
   var cats = {};
-  buyerOrder.forEach(function(item) {
+  items.forEach(function(item) {
     if (!cats[item.cat]) cats[item.cat] = [];
     cats[item.cat].push(item);
   });
@@ -4405,7 +4578,7 @@ function buyerPrintOrderList() {
       '<th style="background:#064e6e;color:white;padding:8px 12px;width:70px">Unit</th>' +
       '<th style="background:#064e6e;color:white;padding:8px 12px">Note</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>' +
-    '<p style="margin-top:20px;font-size:.8rem;color:#aaa">Total: ' + buyerOrder.length + ' items &nbsp;|&nbsp; Printed: ' + new Date().toLocaleDateString() + '</p>' +
+    '<p style="margin-top:20px;font-size:.8rem;color:#aaa">Total: ' + items.length + ' items &nbsp;|&nbsp; Printed: ' + new Date().toLocaleDateString() + '</p>' +
     '<button class="no-print" onclick="window.print()" style="margin-top:16px;padding:10px 24px;background:#064e6e;color:white;border:none;border-radius:6px;font-size:.9rem;cursor:pointer">&#128438; Print / Save as PDF</button>' +
     '</body></html>';
   openPrintWindow(html);
@@ -4413,11 +4586,15 @@ function buyerPrintOrderList() {
 
 function buyerPrintPurchaseReport() {
   if (!buyerOrder.length) { toast('No order loaded yet.'); return; }
+  _lastReportType = 'purchase';
+  var range = getReportDateRange();
+  var filteredItems = buyerOrder.filter(function(i){ return itemInDateRange(i, range); });
+  if (!filteredItems.length) { toast('No items match the selected date range.'); return; }
   var meta = buyerOrder[0];
   var cats = {};
   var grandTotal = 0;
   var boughtCount = 0, unavailCount = 0;
-  buyerOrder.forEach(function(item) {
+  filteredItems.forEach(function(item) {
     if (!cats[item.cat]) cats[item.cat] = [];
     cats[item.cat].push(item);
     if (item.unavailable) { unavailCount++; }
@@ -4465,7 +4642,7 @@ function buyerPrintPurchaseReport() {
     '<h1>&#128200; Purchase Report — ' + meta.dept + '</h1>' +
     '<div class="meta">Ordered by: <strong>' + meta.orderedBy + '</strong> &nbsp;|&nbsp; Date: <strong>' + meta.date + '</strong> &nbsp;|&nbsp; Prepared by: <strong>' + (currentUser||'Buyer') + '</strong></div>' +
     '<div class="summary">' +
-      '<div class="scard"><div class="scard-n">' + buyerOrder.length + '</div><div class="scard-l">Items Ordered</div></div>' +
+      '<div class="scard"><div class="scard-n">' + filteredItems.length + '</div><div class="scard-l">Items Ordered</div></div>' +
       '<div class="scard"><div class="scard-n" style="color:#1e7d52">' + boughtCount + '</div><div class="scard-l">Purchased</div></div>' +
       '<div class="scard"><div class="scard-n" style="color:#b91c1c">' + unavailCount + '</div><div class="scard-l">Unavailable</div></div>' +
       '<div class="scard"><div class="scard-n">IDR ' + grandTotal.toLocaleString() + '</div><div class="scard-l">Total Spent</div></div>' +
@@ -4489,6 +4666,344 @@ function buyerPrintPurchaseReport() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   MY RECENT ORDERS — Order Form panel
+═══════════════════════════════════════════════════════════ */
+var mroPeriod = '2week';
+
+function setMroPeriod(p, btn) {
+  mroPeriod = p;
+  document.querySelectorAll('.mro-period-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  loadMyRecentOrders();
+}
+
+function loadMyRecentOrders() {
+  var body = document.getElementById('mro-body');
+  if (!body) return;
+  var dept = (document.getElementById('f-dept') || {}).value || '';
+
+  if (!SB_URL || !SB_KEY || SB_URL.indexOf('your') >= 0) {
+    body.innerHTML = '<div style="color:var(--ink-lt);font-size:.84rem;text-align:center;padding:14px">Connect Supabase to view order history.</div>';
+    return;
+  }
+  if (!dept) {
+    body.innerHTML = '<div style="color:var(--ink-lt);font-size:.84rem;text-align:center;padding:14px">Select a Department above to see recent orders for that department.</div>';
+    return;
+  }
+
+  /* update panel label to show which department */
+  var lbl = document.querySelector('#mro-card .section-label span');
+  if (lbl) lbl.textContent = 'Recent Orders — ' + dept;
+
+  body.innerHTML = '<div class="sb-loading"><div class="sb-spinner"></div></div>';
+
+  /* date cutoff */
+  var now = new Date();
+  var fromDate = new Date(now);
+  if (mroPeriod === 'week')  fromDate.setDate(now.getDate() - 7);
+  else if (mroPeriod === '2week') fromDate.setDate(now.getDate() - 14);
+  else fromDate.setDate(1); /* start of this month */
+  var fromStr = fromDate.toISOString().split('T')[0];
+
+  /* fetch orders by department */
+  var url = SB_URL + '/rest/v1/orders?dept=eq.' + encodeURIComponent(dept) +
+            '&order_date=gte.' + fromStr +
+            '&order=order_date.desc&limit=100';
+
+  fetch(url, { headers:{ 'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Accept':'application/json' } })
+  .then(function(r){
+    if (!r.ok) return r.text().then(function(t){ throw new Error('Supabase error: ' + t); });
+    return r.json();
+  })
+  .then(function(orders) {
+    if (!Array.isArray(orders)) {
+      body.innerHTML = '<div style="color:var(--red);font-size:.82rem;padding:10px">Unexpected response. Check Supabase connection.</div>';
+      return;
+    }
+    if (!orders.length) {
+      body.innerHTML = '<div style="color:var(--ink-lt);font-size:.84rem;text-align:center;padding:16px">No orders found for <strong>' + esc(dept) + '</strong> in this period.<br><span style="font-size:.75rem">Orders appear here once sent to Buyer View.</span></div>';
+      return;
+    }
+    /* fetch all items + purchases for these orders in batch */
+    var ids = orders.map(function(o){ return o.id; });
+    var hdr = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Accept':'application/json'};
+    Promise.all([
+      fetch(SB_URL + '/rest/v1/order_items?order_id=in.(' + ids.join(',') + ')', { headers:hdr })
+        .then(function(r){ return r.json(); }).then(function(d){ return Array.isArray(d)?d:[]; }),
+      fetch(SB_URL + '/rest/v1/purchases?order_id=in.(' + ids.join(',') + ')', { headers:hdr })
+        .then(function(r){ return r.json(); }).then(function(d){ return Array.isArray(d)?d:[]; })
+    ]).then(function(res) {
+      var allItems = res[0];
+      var allPurch = res[1];
+
+      /* build purchase map: item_id -> purchase */
+      var pMap = {};
+      allPurch.forEach(function(p){ pMap[p.item_id] = p; });
+
+      /* group items by order_id */
+      var itemsByOrder = {};
+      allItems.forEach(function(item){
+        if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
+        itemsByOrder[item.order_id].push(item);
+      });
+
+      /* tally summary */
+      var totOrdered=0, totPurchased=0, totPartial=0, totPending=0, totUnavail=0;
+      allItems.forEach(function(item){
+        var p = pMap[item.id] || {};
+        totOrdered++;
+        if (p.unavailable)                          totUnavail++;
+        else if (p.bought_qty >= item.qty)          totPurchased++;
+        else if (p.bought_qty > 0)                  totPartial++;
+        else                                        totPending++;
+      });
+
+      var html = '<div class="mro-summary-bar">' +
+        '<span class="mro-stat"><span class="mro-dot purchased"></span>' + totPurchased + ' purchased</span>' +
+        (totPartial  ? '<span class="mro-stat"><span class="mro-dot partial"></span>' + totPartial  + ' partial</span>' : '') +
+        (totPending  ? '<span class="mro-stat"><span class="mro-dot pending"></span>' + totPending  + ' pending</span>' : '') +
+        (totUnavail  ? '<span class="mro-stat"><span class="mro-dot unavail"></span>' + totUnavail  + ' unavailable</span>' : '') +
+        '<span style="margin-left:auto;color:var(--ink-lt)">' + totOrdered + ' items across ' + orders.length + ' order' + (orders.length!==1?'s':'') + '</span>' +
+      '</div>';
+
+      orders.forEach(function(order) {
+        var items = itemsByOrder[order.id] || [];
+        if (!items.length) return;
+        var statusCls = { ordered:'pending', purchased:'purchased', received:'purchased' };
+        html += '<div class="mro-order-block">';
+        html += '<div class="mro-order-date">' + esc(order.order_date) +
+          ' &mdash; ' + esc(order.ordered_by) +
+          ' <span style="font-weight:400;font-size:.7rem;background:var(--ocean-pale);color:var(--ocean);padding:1px 8px;border-radius:20px">' +
+          (order.status==='ordered'?'Awaiting purchase':order.status==='purchased'?'Purchased':'Received') +
+          '</span></div>';
+
+        /* sort: pending first, then partial, then purchased, then unavail */
+        items.sort(function(a,b){
+          var rank = function(item){
+            var p=pMap[item.id]||{};
+            if (p.unavailable) return 3;
+            if (!p.bought_qty) return 0;
+            if (parseFloat(p.bought_qty) < parseFloat(item.qty)) return 1;
+            return 2;
+          };
+          return rank(a)-rank(b);
+        });
+
+        items.forEach(function(item) {
+          var p = pMap[item.id] || {};
+          var dotCls, badgeCls, badgeLabel;
+          if (p.unavailable) {
+            dotCls='unavail'; badgeCls='unavail'; badgeLabel='Not available';
+          } else if (!p.bought_qty) {
+            dotCls='pending'; badgeCls='pending'; badgeLabel='Not yet purchased';
+          } else if (parseFloat(p.bought_qty) >= parseFloat(item.qty)) {
+            dotCls='purchased'; badgeCls='purchased'; badgeLabel='Purchased ✓';
+          } else {
+            dotCls='partial'; badgeCls='partial';
+            badgeLabel = parseFloat(p.bought_qty) + '/' + item.qty + ' ' + item.unit;
+          }
+          var priceNote = (p.price_per_unit && !p.unavailable)
+            ? ' &bull; IDR ' + fmtIDR(parseFloat(p.bought_qty||0) * parseFloat(p.price_per_unit))
+            : '';
+          html +=
+            '<div class="mro-item-row">' +
+              '<div class="mro-dot ' + dotCls + '"></div>' +
+              '<div class="mro-name">' + esc(item.name) +
+                '<span style="font-size:.7rem;color:var(--ink-lt);margin-left:5px">' + esc(item.cat) + '</span>' +
+              '</div>' +
+              '<div class="mro-qty">' + item.qty + ' ' + esc(item.unit) + priceNote + '</div>' +
+              '<div class="mro-badge ' + badgeCls + '">' + badgeLabel + '</div>' +
+            '</div>';
+        });
+        html += '</div>';
+      });
+
+      body.innerHTML = html;
+    });
+  })
+  .catch(function(e){
+    body.innerHTML = '<div style="color:var(--red);font-size:.82rem;padding:10px">Could not load orders: ' + esc(e.message) + '</div>';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXCEL EXPORT — Buyer View
+═══════════════════════════════════════════════════════════ */
+function buyerDownloadExcel() {
+  if (!buyerOrder.length) { toast('No order loaded.'); return; }
+  if (typeof XLSX === 'undefined') { toast('Excel library not loaded — check internet connection.'); return; }
+
+  var wb   = XLSX.utils.book_new();
+  var meta = buyerOrder[0];
+
+  /* Summary sheet */
+  var summaryRows = [
+    ['Resort Supply Order Report'],
+    ['Department', meta.dept || '—'],
+    ['Ordered by', meta.orderedBy || '—'],
+    ['Order Date', meta.date || '—'],
+    ['Generated', new Date().toLocaleDateString()],
+    []
+  ];
+  var ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+  /* Items sheet */
+  var headers = ['Category','Product','Unit','Qty Ordered','Qty Purchased','Price/Unit (IDR)','Line Total (IDR)','Status','Note'];
+  var rows = [headers];
+  buyerOrder.forEach(function(item) {
+    var s  = buyerItemStatus(item);
+    var bq = calcTotalBought(item);
+    var pp = calcAvgPrice(item);
+    var lt = item.unavailable ? 0 : Math.round(bq * pp);
+    var statusLabel = item.unavailable ? 'Not Available' : s === 'done' ? 'Purchased' : s === 'partial' ? 'Partial' : 'Pending';
+    rows.push([
+      item.cat, item.name, item.unit,
+      item.qty,
+      item.unavailable ? 0 : bq,
+      item.unavailable ? 0 : pp,
+      lt,
+      statusLabel,
+      item.note || ''
+    ]);
+  });
+
+  /* totals row */
+  var grandTotal = buyerOrder.reduce(function(acc, item) {
+    if (item.unavailable) return acc;
+    return acc + Math.round(calcTotalBought(item) * calcAvgPrice(item));
+  }, 0);
+  rows.push([]);
+  rows.push(['', '', '', '', '', 'GRAND TOTAL', grandTotal, '', '']);
+
+  var ws2 = XLSX.utils.aoa_to_sheet(rows);
+  /* column widths */
+  ws2['!cols'] = [20,28,8,12,14,16,16,14,20].map(function(w){ return {wch:w}; });
+  XLSX.utils.book_append_sheet(wb, ws2, 'Order Items');
+
+  var fname = 'Order_' + (meta.dept||'Resort').replace(/\s+/g,'_') + '_' + (meta.date||'').replace(/-/g,'') + '.xlsx';
+  XLSX.writeFile(wb, fname);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MANAGEMENT — view any historical order in buyer report format
+═══════════════════════════════════════════════════════════ */
+function viewOrderAsBuyerReport(orderId) {
+  var order = histAllOrders.find(function(o){ return o.id === orderId; }) || {};
+  toast('Loading order report...');
+
+  Promise.all([
+    sbSelect('order_items','*',{order_id:orderId}),
+    sbSelect('purchases','*',{order_id:orderId}),
+    sbSelect('receive_checks','*',{order_id:orderId})
+  ]).then(function(res) {
+    var items   = res[0] || [];
+    var purch   = res[1] || [];
+    var checks  = res[2] || [];
+    var pMap={}, rMap={};
+    purch.forEach(function(p){ pMap[p.item_id]=p; });
+    checks.forEach(function(c){ rMap[c.item_id]=c; });
+
+    /* group by category */
+    var cats={};
+    items.forEach(function(item){
+      if(!cats[item.cat]) cats[item.cat]=[];
+      cats[item.cat].push(item);
+    });
+    var catKeys = Object.keys(cats).sort();
+    var grandTotal = purch.reduce(function(a,p){
+      return a+(parseFloat(p.bought_qty)||0)*(parseFloat(p.price_per_unit)||0);
+    },0);
+    var num=1;
+    var rows = '';
+    catKeys.forEach(function(cat){
+      rows += '<tr><td colspan="7" style="background:#064e6e;color:white;font-weight:700;padding:7px 12px;font-size:.78rem;letter-spacing:.5px;text-transform:uppercase">'+cat+'</td></tr>';
+      cats[cat].forEach(function(item){
+        var p=pMap[item.id]||{}, r=rMap[item.id]||{};
+        var bq=parseFloat(p.bought_qty)||0, pp=parseFloat(p.price_per_unit)||0;
+        var lt=bq*pp;
+        var recvSt=r.recv_status||'—';
+        var stColor=recvSt==='semua'?'#1e7d52':recvSt==='sebagian'?'#b45c10':recvSt==='masalah'?'#b91c1c':'#888';
+        rows+='<tr>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;color:#999;font-size:.75rem">'+num+++'</td>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;font-weight:500">'+item.name+'<br><span style="font-size:.7rem;color:#aaa">'+item.cat+'</span></td>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;text-align:center;font-family:monospace;color:#064e6e">'+item.qty+' '+item.unit+'</td>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;text-align:center;font-family:monospace">'+(p.unavailable?'<span style="color:#b91c1c;font-weight:700">N/A</span>':(bq||'—')+(bq?' '+item.unit:''))+'</td>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace">'+(pp&&!p.unavailable?'IDR '+fmtIDR(pp):'—')+'</td>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;font-weight:700;color:#064e6e">'+(lt?'IDR '+fmtIDR(lt):'—')+'</td>'+
+          '<td style="padding:7px 10px;border-bottom:1px solid #eee;font-size:.76rem;color:'+stColor+';font-weight:600">'+recvSt+(r.recv_note?'<br><em style="font-weight:400;color:#888">'+r.recv_note+'</em>':'')+'</td>'+
+        '</tr>';
+      });
+    });
+
+    /* Excel download for this order */
+    var excelBtn = '<button onclick="viewOrderExcel(\''+orderId+'\')" style="padding:9px 18px;background:#1e7d52;color:white;border:none;border-radius:7px;font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;margin-right:8px">&#128202; Download Excel</button>';
+
+    var html =
+      '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Order Report</title></head><body>'+
+      '<h1 style="font-family:serif;font-size:1.3rem;color:#064e6e;margin:0 0 4px">&#127984; Supply Order — '+esc(order.dept||'')+'</h1>'+
+      '<p style="font-size:.82rem;color:#555;margin-bottom:16px">'+
+        'By: <strong>'+(order.ordered_by||'—')+'</strong> &nbsp;|&nbsp; '+
+        'Date: <strong>'+(order.order_date||'—')+'</strong> &nbsp;|&nbsp; '+
+        'Status: <strong>'+(order.status||'—')+'</strong> &nbsp;|&nbsp; '+
+        'Total: <strong>IDR '+fmtIDR(grandTotal)+'</strong>'+
+      '</p>'+
+      '<div style="margin-bottom:14px">'+excelBtn+'</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:.85rem"><thead><tr>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px;text-align:left;width:28px">#</th>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px;text-align:left">Product</th>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px;text-align:center">Ordered</th>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px;text-align:center">Purchased</th>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px;text-align:right">Price/Unit</th>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px;text-align:right">Total</th>'+
+        '<th style="background:#064e6e;color:white;padding:7px 10px">Received</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody>'+
+      '<tfoot><tr>'+
+        '<td colspan="5" style="padding:9px 10px;font-weight:700;text-align:right;background:#edf7fc">Grand Total</td>'+
+        '<td style="padding:9px 10px;font-weight:700;font-family:monospace;background:#edf7fc;text-align:right;color:#064e6e">IDR '+fmtIDR(grandTotal)+'</td>'+
+        '<td style="background:#edf7fc"></td>'+
+      '</tr></tfoot></table></body></html>';
+
+    /* store data for Excel download from inside the overlay */
+    window._viewOrderData = { orderId:orderId, order:order, items:items, pMap:pMap, rMap:rMap, grandTotal:grandTotal };
+    openPrintWindow(html);
+  }).catch(function(e){ toast('Error loading order: '+e.message); });
+}
+
+/* Excel download triggered from inside the view-order overlay */
+function viewOrderExcel(orderId) {
+  var d = window._viewOrderData;
+  if (!d || d.orderId !== orderId || typeof XLSX === 'undefined') { toast('Data not ready.'); return; }
+  var order=d.order, items=d.items, pMap=d.pMap, rMap=d.rMap;
+  var wb = XLSX.utils.book_new();
+
+  var headers = ['Category','Product','Unit','Qty Ordered','Qty Purchased','Price/Unit (IDR)','Line Total (IDR)','Received Status','Notes'];
+  var rows = [headers];
+  items.forEach(function(item){
+    var p=pMap[item.id]||{}, r=rMap[item.id]||{};
+    var bq=parseFloat(p.bought_qty)||0, pp=parseFloat(p.price_per_unit)||0;
+    rows.push([
+      item.cat, item.name, item.unit,
+      item.qty,
+      p.unavailable?0:bq,
+      p.unavailable?0:pp,
+      p.unavailable?0:Math.round(bq*pp),
+      r.recv_status||'—',
+      r.recv_note||''
+    ]);
+  });
+  rows.push([]);
+  rows.push(['','','','','','GRAND TOTAL',Math.round(d.grandTotal),'','']);
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [20,28,8,12,14,16,16,14,24].map(function(w){ return {wch:w}; });
+  XLSX.utils.book_append_sheet(wb, ws, 'Order');
+
+  var fname = 'Order_'+(order.dept||'Resort').replace(/\s+/g,'_')+'_'+(order.order_date||'').replace(/-/g,'')+'.xlsx';
+  XLSX.writeFile(wb, fname);
+}
+
+/* ═══════════════════════════════════════════════════════════
    ACCESS CONTROL
    roles:  buyer | ordering | management | admin
    admin   = all tabs
@@ -4504,7 +5019,7 @@ var USERS = {
   'Eta':    'ordering',
   'Akiba':  'ordering',
   'Igen':   'ordering',
-  'Rangga': 'management',
+  'Rangga': 'admin',
   'Lisa':   'admin',
   'Jack':   'admin',
   'Nurul':  'admin'
@@ -4570,6 +5085,8 @@ function applyAccess() {
   if (nameEl && !nameEl.value) nameEl.value = currentUser;
   /* rebuild category dropdown in case dept was already set */
   rebuildCatDropdown();
+  /* load recent orders for this user */
+  setTimeout(loadMyRecentOrders, 600);
   var allowed = ACCESS[currentRole] || [];
 
   /* show/hide tabs */
@@ -5186,6 +5703,7 @@ function histLoadDetail(orderId, container) {
     var order=histAllOrders.find(function(o){return o.id===orderId;})||{};
     html2+=
       '<div class="hist-card-actions">'+
+        '<button class="hca-btn" style="border-color:var(--ocean-mid);color:var(--ocean);background:var(--ocean-pale)" onclick="viewOrderAsBuyerReport(\''+orderId+'\')">&#128202; View / Download Report</button>'+
         (!order.archived&&order.status!=='received'
           ?'<button class="hca-btn" style="border-color:var(--ocean-mid);color:var(--ocean);background:var(--ocean-pale)" onclick="resumeOrder(\''+orderId+'\')">&#9654; Resume Order</button>'
           :'')+
